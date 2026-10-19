@@ -1,0 +1,108 @@
+<!doctype html>
+<!-- =====================================================================
+     index.html — Shell de Atalaya (aplicación de una sola página).
+     Barra superior fija + barra lateral (menú dinámico desde /api/auth/yo)
+     + zona de contenido donde el enrutador pinta cada vista.
+     La lógica vive en assets/js/app.js.
+     ===================================================================== -->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Atalaya</title>
+  <meta name="description" content="Atalaya — portal de control de acceso por menús.">
+  <link rel="icon" type="image/svg+xml" href="assets/img/atalaya.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="assets/css/atalaya.css" rel="stylesheet">
+  <script>
+    /* Sin token no hay nada que mostrar: ir al login antes de pintar. */
+    try { if (!sessionStorage.getItem('atalaya.token')) location.replace('login.html'); } catch (e) { location.replace('login.html'); }
+  </script>
+</head>
+<body>
+  <a class="visually-hidden-focusable" href="#contenido">Saltar al contenido</a>
+
+  <div class="app" id="app">
+    <!-- Barra superior -->
+    <header class="barra">
+      <div class="zona zona-menu">
+        <button class="btn-ico" id="btn-menu" type="button" aria-label="Abrir o cerrar el menú" aria-controls="lateral" aria-expanded="true">
+          <i class="bi bi-list" aria-hidden="true" style="font-size:22px"></i>
+        </button>
+      </div>
+      <a class="zona logo" href="#/inicio" aria-label="Atalaya, ir al inicio">
+        <img src="assets/img/atalaya.svg" alt=""><span>Atalaya</span>
+      </a>
+      <div class="zona modulo-actual">
+        <span class="sello"><i class="bi bi-house-door" id="titulo-ico" aria-hidden="true"></i></span>
+        <span id="titulo-modulo">Inicio</span>
+      </div>
+      <nav class="zona ruta" id="migas" aria-label="Ruta de navegación"></nav>
+      <div class="derecha">
+        <button class="boton-buscar" id="btn-buscar" type="button" aria-label="Buscar en el menú (Ctrl+K)">
+          <i class="bi bi-search" aria-hidden="true"></i><span class="texto">Buscar menú…</span><kbd>Ctrl K</kbd>
+        </button>
+        <a class="btn-ico" href="#/manual" title="Manual de uso" aria-label="Manual de uso"><i class="bi bi-question-circle" aria-hidden="true"></i></a>
+        <div class="dropdown">
+          <button class="avatar-btn" id="avatar" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menú de usuario">··</button>
+          <div class="dropdown-menu dropdown-menu-end menu-usuario">
+            <div class="quien">
+              <b id="quien-nombre">—</b>
+              <span id="quien-correo"></span>
+              <em id="quien-usuario"></em>
+            </div>
+            <a class="dropdown-item" href="#/inicio"><i class="bi bi-house-door" aria-hidden="true"></i>Inicio</a>
+            <a class="dropdown-item" href="#/manual"><i class="bi bi-journal-text" aria-hidden="true"></i>Manual de uso</a>
+            <a class="dropdown-item" href="swagger" target="_blank" rel="noopener"><i class="bi bi-braces" aria-hidden="true"></i>Documentación del API</a>
+            <hr class="dropdown-divider">
+            <button class="dropdown-item peligro" id="btn-salir" type="button"><i class="bi bi-box-arrow-right" aria-hidden="true"></i>Cerrar sesión</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Barra lateral -->
+    <aside class="lateral" id="lateral" aria-label="Menú principal">
+      <nav class="navegacion" id="navegacion">
+        <div class="cargando-nav" aria-busy="true">
+          <div class="esqueleto esq-linea" style="width:50%"></div>
+          <div class="esqueleto esq-fila"></div><div class="esqueleto esq-fila"></div><div class="esqueleto esq-fila"></div>
+        </div>
+      </nav>
+      <button class="pestana" id="pestana" type="button" aria-label="Contraer o expandir la barra lateral"><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
+    </aside>
+    <div class="velo" id="velo"></div>
+
+    <!-- Contenido -->
+    <div class="principal">
+      <main class="contenido" id="contenido" tabindex="-1">
+        <div class="esqueleto esq-titulo"></div>
+        <div class="esqueleto esq-bloque"></div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Paleta de búsqueda de menús (Ctrl+K) -->
+  <div class="modal fade paleta" id="paleta" tabindex="-1" aria-label="Buscar en el menú" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable paleta-dialogo" style="margin-top:12vh">
+      <div class="modal-content">
+        <div class="entrada">
+          <i class="bi bi-search" aria-hidden="true"></i>
+          <input id="paleta-texto" type="text" placeholder="¿A dónde quiere ir?" autocomplete="off" aria-label="Buscar menú" aria-controls="paleta-resultados">
+          <kbd>Esc</kbd>
+        </div>
+        <div class="resultados" id="paleta-resultados" role="listbox"></div>
+        <div class="pie"><span><kbd>↑</kbd> <kbd>↓</kbd> moverse</span><span><kbd>Enter</kbd> abrir</span><span class="ms-auto">Solo aparecen sus menús</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>

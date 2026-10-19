@@ -1,0 +1,27 @@
+# Compilación
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.pdb
+
+# Paquetes NuGet (se restauran con nuget restore / Visual Studio)
+packages/
+!packages/repositories.config
+
+# Visual Studio / IIS Express
+.vs/
+*.user
+*.suo
+*.cache
+*.log
+_ReSharper*/
+
+# Secretos locales (NUNCA versionar; ver los .example.config)
+src/Atalaya.Web/ConnectionStrings.config
+src/Atalaya.Web/Secretos.config
+ConnectionStrings.config
+Secretos.config
+
+# Node (scripts auxiliares)
+node_modules/
