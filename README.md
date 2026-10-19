@@ -39,20 +39,39 @@ Solución web para registrar usuarios, autenticarlos y controlar dinámicamente 
 
 ## 3. Instalación
 
-### 3.1 Base de datos
+### 3.1 Base de datos (MySQL 8.0.16 o superior)
 
+Un solo script, `database/00_instalar_todo.sql`, crea la base `atalaya_acceso`, las 7 tablas, los 16 procedimientos almacenados y los datos de prueba. Es idempotente: se puede correr varias veces y siempre deja el estado inicial. Se probó instalándolo sobre un MySQL 8.4 recién instalado.
+
+**Opción A — MySQL Workbench**
+1. Conectarse al servidor local con `root`.
+2. *File → Open SQL Script…* → `database/00_instalar_todo.sql`.
+3. Ejecutar todo el script (rayo ⚡ sin seleccionar texto, o `Ctrl+Shift+Enter`).
+4. *Refresh* en el panel *Schemas*: aparece `atalaya_acceso`.
+
+**Opción B — consola**
 ```bash
-mysql -u root -p < database/00_instalar_todo.sql
+mysql -u root -p --default-character-set=utf8mb4 < database/00_instalar_todo.sql
 ```
 
-El script crea la base `atalaya_acceso`, las tablas, los procedimientos y los datos de prueba. Es idempotente: se puede correr varias veces y siempre deja el estado inicial.
+**Verificación** (debe devolver 4 usuarios y 16 procedimientos):
+```sql
+SELECT usuario, estado FROM atalaya_acceso.usuario;
+SELECT COUNT(*) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = 'atalaya_acceso';
+```
 
-Opcional, para usar un usuario de aplicación con permisos mínimos (ver `database/LEEME_BD.md`):
-
+Opcional, usuario de aplicación con permisos mínimos (la API solo ejecuta procedimientos):
 ```sql
 CREATE USER 'atalaya_app'@'localhost' IDENTIFIED BY 'una-clave-segura';
-GRANT EXECUTE, SELECT ON atalaya_acceso.* TO 'atalaya_app'@'localhost';
+GRANT EXECUTE ON atalaya_acceso.* TO 'atalaya_app'@'localhost';
 ```
+
+| Problema | Solución |
+|---|---|
+| Error de sintaxis en `CHECK` o `WITH RECURSIVE` | La versión de MySQL es anterior a 8.0.16: actualizar. |
+| `Public Key Retrieval is not allowed` | La cadena ya trae `AllowPublicKeyRetrieval=true`; revisar que se copió completa. |
+| `Access denied for user` | Usuario o clave mal escritos en `ConnectionStrings.config`. |
+| `/api/salud` responde `baseDatos: error` | MySQL no está corriendo o el puerto no es el 3306. |
 
 ### 3.2 Configuración (secretos fuera del código)
 
@@ -64,8 +83,10 @@ copy ConnectionStrings.example.config ConnectionStrings.config
 copy Secretos.example.config Secretos.config
 ```
 
-- `ConnectionStrings.config`: servidor, usuario y clave de MySQL.
-- `Secretos.config`: `Jwt:Clave`, una cadena aleatoria de 32 caracteres o más que firma los tokens.
+- `ConnectionStrings.config`: **lo único que hay que editar**. Reemplazar `CLAVE_DE_ROOT` por la clave de `root` de su MySQL (o poner otro usuario).
+- `Secretos.config`: funciona tal cual para pruebas locales. En un ambiente real, reemplazar `Jwt:Clave` por una cadena aleatoria de 32 caracteres o más (el comando para generarla está dentro del archivo).
+
+Para confirmar la conexión, al ejecutar abrir `http://localhost:52080/api/salud`: debe responder `"baseDatos":"ok"`.
 
 ### 3.3 Ejecución
 
